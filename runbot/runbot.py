@@ -184,7 +184,7 @@ class runbot_repo(osv.osv):
                 result[repo.id]['host_driver'] = 'localpath'
                 result[repo.id]['host_url'] = 'localhost'
                 result[repo.id]['url'] = '%s%s'%( 'file://', repo.name )
-            name = re.sub('.+@', '', repo.name)
+            name = re.sub('(.+@)|(.git)$', '', repo.name)
             name = name.replace(':','/')
             result[repo.id]['base'] = name
             regex = "(?P<host>(git@|https://|http://|ssh://)([\w\.@]+)(/|:))(?P<owner>[\w,\-,\_]+)/(?P<repo>[\w,\-,\_]+)(.git){0,1}((/){0,1})"
