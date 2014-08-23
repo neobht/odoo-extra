@@ -187,7 +187,7 @@ class runbot_repo(osv.osv):
             name = re.sub('.+@', '', repo.name)
             name = name.replace(':','/')
             result[repo.id]['base'] = name
-            regex = "(?P<host>(git@|https://)([\w\.@]+)(/|:))(?P<owner>[\w,\-,\_]+)/(?P<repo>[\w,\-,\_]+)(.git){0,1}((/){0,1})"
+            regex = "(?P<host>(git@|https://|http://|ssh://)([\w\.@]+)(/|:))(?P<owner>[\w,\-,\_]+)/(?P<repo>[\w,\-,\_]+)(.git){0,1}((/){0,1})"
             match_object = re.search( regex, repo.name )
             if match_object:
                 result[repo.id]['host'] = match_object.group("host")
@@ -195,14 +195,16 @@ class runbot_repo(osv.osv):
                 result[repo.id]['repo'] = match_object.group("repo")
                 if 'github.com' in result[repo.id]['host']:
                     result[repo.id]['host_driver'] = 'github'
-                    result[repo.id]['host_url'] = 'github.com'
-                    result[repo.id]['url'] = '/'.join( [ 'https://', result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
+                    result[repo.id]['host_url'] = 'https://github.com'
+                    result[repo.id]['url'] = '/'.join( [ result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
                 elif 'bitbucket.org' in result[repo.id]['host']:
                     result[repo.id]['host_driver'] = 'bitbucket'
-                    result[repo.id]['host_url'] = 'bitbucket.org'
-                    result[repo.id]['url'] = '/'.join( [ 'https://', result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
+                    result[repo.id]['host_url'] = 'https://bitbucket.org'
+                    result[repo.id]['url'] = '/'.join( [ result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
                 else:
-                    pass
+                    result[repo.id]['host_driver'] = 'another'
+                    result[repo.id]['host_url'] = result[repo.id]['host']
+                    result[repo.id]['url'] = '/'.join( [ result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
                     #You can inherit this function for add more host's
         return result
 
@@ -1125,14 +1127,14 @@ class RunbotController(http.Controller):
 
             if build_ids:
                 branch_query = """
-                    SELECT br.id AS branch_id, 
+                    SELECT br.id AS branch_id,
                         bu.branch_dependency_id,
                         CASE WHEN br.sticky AND bu.branch_dependency_id IS NULL THEN True
                              ELSE False
                         END AS real_sticky
-                    FROM runbot_branch br 
-                    INNER JOIN runbot_build bu 
-                       ON br.id=bu.branch_id 
+                    FROM runbot_branch br
+                    INNER JOIN runbot_build bu
+                       ON br.id=bu.branch_id
                     WHERE bu.id in %s
                     ORDER BY real_sticky DESC, bu.sequence DESC--, br.id DESC, bu.branch_dependency_id DESC
                 """
@@ -1168,7 +1170,7 @@ class RunbotController(http.Controller):
                 build_by_branch_ids = {
                     (rec[0], rec[1]): [r for r in rec[2:] if r is not None] for rec in cr.fetchall()
                 }
-            
+
             #branches = branch_obj.browse(cr, uid, branch_ids, context=request.context)
             build_ids = flatten(build_by_branch_ids.values())
             build_dict = {build.id: build for build in build_obj.browse(cr, uid, build_ids, context=request.context) }
@@ -1181,7 +1183,7 @@ class RunbotController(http.Controller):
                 }
 
             context.update({
-                'branches': [ branch_info( 
+                'branches': [ branch_info(
                                 branch_obj.browse(cr, uid, [branch_id], context=request.context)[0],\
                                 branch_obj.browse(cr, uid, [branch_dependency_id], context=request.context)[0]\
                          ) \
