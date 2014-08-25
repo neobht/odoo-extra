@@ -195,8 +195,8 @@ class runbot_repo(osv.osv):
                 result[repo.id]['repo'] = match_object.group("repo")
                 if 'github.com' in result[repo.id]['host']:
                     result[repo.id]['host_driver'] = 'github'
-                    result[repo.id]['host_url'] = 'https://github.com'
-                    result[repo.id]['url'] = '/'.join( [ result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
+                    result[repo.id]['host_url'] = 'github.com'
+                    result[repo.id]['url'] = '/'.join( [ 'https:/',result[repo.id]['host_url'], result[repo.id]['owner'], result[repo.id]['repo'] ] )
                 elif 'bitbucket.org' in result[repo.id]['host']:
                     result[repo.id]['host_driver'] = 'bitbucket'
                     result[repo.id]['host_url'] = 'https://bitbucket.org'
